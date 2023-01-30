@@ -1,0 +1,95 @@
+#include "cyoa_story.hpp"
+
+void printErrorMsg(const char * errorStr) {
+  std::cerr << errorStr << std::endl;
+  exit(EXIT_FAILURE);
+}
+
+size_t isInteger(char * line) {
+  char * ptr;
+  long result = strtol(line, &ptr, 10);
+  if (*ptr != '\0') {
+    printErrorMsg("encounter some character before number");
+  }
+  if (result == 0 && *(ptr - 1) != '0') {
+    printErrorMsg("there is no digits at all");
+  }
+  if (result < 0) {
+    printErrorMsg("result is not a valid number");
+  }
+  return result;
+}
+
+// int isType(char * type_str) {
+//   // check if it is N, L, W
+//   return 1;
+// }
+
+void readPage(std::istream & is, Story & s1, size_t pageNum) {
+  std::string s;
+  Page * pg = s1[pageNum];
+  while (getline(is, s)) {
+    // std::cout << "test" << std::endl;
+    // std::cout << s << std::endl;
+    pg->addContents(s);
+  }
+}
+
+std::vector<char *> readStory(std::istream & is, Story & s1) {
+  std::string s;
+  std::vector<char *> filenameVector;
+  while (getline(is, s)) {
+    const char * line = s.c_str();
+    const char * at;
+    const char * colon_first;
+    if ((at = strchr(line, '@')) != NULL) {
+      // deal with pages
+      char * pagenum_str = strndup(line, at - line);
+      size_t pagenum_temp = isInteger(pagenum_str);
+      const char * type_colon = strchr(at, ':');
+      if (type_colon == NULL) {
+        printErrorMsg("is not a valid type");
+      }
+      char * type_str = strndup(at + 1, type_colon - (at + 1));
+      // check type_str is N, L, W
+      char * filename = strdup(type_colon + 1);
+      filenameVector.push_back(filename);
+      Page * newPage = new Page();
+      newPage->setPageNum(pagenum_temp);
+      newPage->setType(*type_str);
+      s1.addBlankPage(newPage);
+    }
+    else if ((colon_first = strchr(line, ':')) != NULL) {
+      // deal with choices
+      char * pagenum_str = strndup(line, colon_first - line);
+      size_t pagenum_temp = isInteger(pagenum_str);
+      // if (!s1.isPageNum(pagenum_temp)){
+      //   printErrorMsg("we have not create that page");
+      // }
+      const char * des_colon = strchr(colon_first + 1, ':');
+      if (des_colon == NULL) {
+        printErrorMsg("there is no des page");
+      }
+      char * des_str = strndup(colon_first + 1, des_colon - (colon_first + 1));
+      size_t desNum = isInteger(des_str);
+      char * choice_str = strdup(des_colon + 1);
+      std::stringstream ss;
+      std::string choiceString;
+      ss << choice_str;
+      ss >> choiceString;
+      std::cout << choice_str << std::endl;
+      //std::cout << choiceString << std::endl;
+      // Page pg; &pg，dangling pointer?
+      Page * pg = s1[pagenum_temp];
+      pg->addChoices(desNum, choiceString);
+    }
+    else if (s.size() == 0) {
+      continue;
+    }
+    else {
+      printErrorMsg("can not read line");
+    }
+  }
+  return filenameVector;
+  // read files contents
+}

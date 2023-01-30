@@ -1,0 +1,44 @@
+#include <cstring>
+
+#include "cyoa_story.hpp"
+
+int main(int argc, char ** argv) {
+  // not just the directory name
+  if (argc != 2) {
+    std::cout << "Usage FileName" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  //
+  std::stringstream ss1;
+  ss1 << argv[1];
+  ss1 << "/story.txt";
+  // strcat(argv[1], "/story.txt");
+  std::ifstream ifs;
+  ifs.open(ss1.str().data(), std::ios::in);
+  if (!ifs.is_open()) {
+    std::cerr << "fail to open" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  Story s1;
+  std::vector<char *> fileList;
+  fileList = readStory(ifs, s1);
+  ifs.close();
+
+  for (size_t i = 0; i < fileList.size(); i++) {
+    // std::cout << fileList[i] << std::endl;
+    std::stringstream ss;
+    ss << argv[1];
+    ss << '/' << fileList[i];
+    //std::cout << ss.str().data() << std::endl;
+    ifs.open(ss.str().data(), std::ios::in);
+
+    if (!ifs.is_open()) {
+      std::cerr << "fail to open" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    readPage(ifs, s1, i);
+    ifs.close();
+  }
+
+  //s1.printStory();
+}
